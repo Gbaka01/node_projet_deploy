@@ -52,7 +52,7 @@ const login = async (req,res) => {
 
         res.status(200).json({
             nom : user.nom,
-            token : jwt.sign({id : user._id}, process.env.SECRET_KEY)
+            token : jwt.sign({id : user._id, nom : user.nom, prenom : user.prenom, email : user.email }, process.env.SECRET_KEY)
         })
     } catch (error) {
         console.log(error);
