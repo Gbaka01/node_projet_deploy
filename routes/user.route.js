@@ -10,6 +10,6 @@ router.get('/list', auth, getAll)
 router.get('/:id', auth, getOne)
 router.put('/:id', auth, updateUser)
 router.delete('/:id', auth, deleteOne)
-router.put("/renew-password", auth, renewPassword);
+router.put("/renewpassword", auth, renewPassword);
 
 export default router
