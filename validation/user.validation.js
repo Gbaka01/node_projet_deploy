@@ -1,5 +1,8 @@
 import joi from 'joi'
-
+export const renewPasswordSchema = joi.object({
+  password: joi.string().required(),
+  newPassword: joi.string().min(6).required(),
+})
 function userValidation(body) {
     const userLawRegister = joi.object({
         nom : joi.string(),
@@ -22,6 +25,7 @@ function userValidation(body) {
         // Regex : Minimum 8 caractères, une majuscule, une minuscule,, un chiffre et un caractère spécial
         password : joi.string()
     })
+
     
     return {
         userLawRegister : userLawRegister.validate(body),
