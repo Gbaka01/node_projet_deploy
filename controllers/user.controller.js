@@ -51,7 +51,7 @@ const login = async (req, res) => {
 
     // ✅ Générer un token avec la même clé que dans auth.js
     const token = jwt.sign(
-      { id: user._id, nom: user.nom, prenom: user.prenom, email: user.email },
+      { id: user._id, nom: user.nom, email: user.email },
       process.env.SECRET_KEY,          // ⚠️ même nom que dans auth.js
       { expiresIn: "1h" }              // durée d’expiration
     )
