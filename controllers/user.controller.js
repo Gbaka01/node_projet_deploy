@@ -160,5 +160,37 @@ const deleteOne = async (req, res) => {
         res.sendStatus(500)
     }
 }
+ const renewPassword = async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
 
-export { register, login, getAll, getOne, updateUser, deleteOne }
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({ message: "Ancien et nouveau mot de passe requis" });
+    }
+
+    // Récupérer l'utilisateur via le middleware auth (req.user.id)
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "Utilisateur non trouvé" });
+    }
+
+    // Vérifier l'ancien mot de passe
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Ancien mot de passe incorrect" });
+    }
+
+    // Hasher le nouveau mot de passe
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+
+    await user.save();
+
+    res.json({ message: "Mot de passe mis à jour avec succès" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Erreur serveur" });
+  }
+};
+
+export { register, login, getAll, getOne, updateUser, deleteOne, renewPassword }
