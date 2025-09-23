@@ -1,22 +1,32 @@
-import jwt from 'jsonwebtoken'
+import jwt from "jsonwebtoken"
 
-const authenticateToken = (req, res, next) => {
-    const authHeader = req.headers['authorization']
-
-    const token = authHeader && authHeader.split(' ')[1]
-
-    if ( !token ) {
-        return res.status(401).json({ msg : "Token manquant" })
+export default function auth(req, res, next) {
+  try {
+    const authHeader = req.headers["authorization"] // récupère le header complet
+    if (!authHeader) {
+      return res.status(401).json({ message: "Aucun token fourni" })
     }
 
-    jwt.verify(token, process.env.SECRET_KEY, (err, user) => {
+    // On attend "Bearer <token>"
+    const parts = authHeader.split(" ")
+    if (parts.length !== 2 || parts[0] !== "Bearer") {
+      return res.status(401).json({ message: "Format de token invalide" })
+    }
 
-        if (err) return res.status(403).json({ message: "Token invalide" });
+    const token = parts[1]
 
-        req.user = user;
-        
-        next();
-    });
+    // Vérifier le token
+    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+      if (err) {
+        return res.status(401).json({ message: "Token invalide ou expiré" })
+      }
+
+      // Injecter les infos du token dans req.user
+      req.user = decoded
+      next()
+    })
+  } catch (err) {
+    console.error("Erreur auth middleware:", err)
+    res.status(500).json({ message: "Erreur serveur" })
+  }
 }
-
-export default authenticateToken
