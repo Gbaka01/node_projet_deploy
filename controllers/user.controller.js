@@ -27,38 +27,47 @@ const register = async (req, res) => {
         res.sendStatus(500)
     }
 }
+const login = async (req, res) => {
+  try {
+    const { email, password } = req.body
 
-const login = async (req,res) => {
-    try {
-        const { email, password } = req.body
-
-        const { error } = userValidation(req.body).userLawLogin
-
-        if ( error ) {
-            return res.status(401).json(error.details[0].message)
-        }
-
-        const user = await User.findOne({ email : email })
-
-        if ( !user ) {
-            return res.status(400).json({ msg : "Identifiants invalides" })
-        }
-
-        const isMatch = await bcrypt.compare(password, user.password)
-
-        if ( !isMatch ) {
-            return res.status(400).json({ msg : "identifiants invalides" })
-        }
-
-        res.status(200).json({
-            user : { id : user._id, nom : user.nom, email : user.email },
-            token : jwt.sign({id : user._id, nom : user.nom, prenom : user.prenom, email : user.email }, process.env.SECRET_KEY)
-        })
-    } catch (error) {
-        console.log(error);
-        res.sendStatus(500)
+    // Validation Joi
+    const { error } = userValidation(req.body).userLawLogin
+    if (error) {
+      return res.status(400).json({ message: error.details[0].message })
     }
+
+    // Chercher l'utilisateur
+    const user = await User.findOne({ email })
+    if (!user) {
+      return res.status(400).json({ message: "Identifiants invalides" })
+    }
+
+    // Vérifier mot de passe
+    const isMatch = await bcrypt.compare(password, user.password)
+    if (!isMatch) {
+      return res.status(400).json({ message: "Identifiants invalides" })
+    }
+
+    // ✅ Générer un token avec la même clé que dans auth.js
+    const token = jwt.sign(
+      { id: user._id, nom: user.nom, prenom: user.prenom, email: user.email },
+      process.env.SECRET_KEY,          // ⚠️ même nom que dans auth.js
+      { expiresIn: "1h" }              // durée d’expiration
+    )
+
+    res.status(200).json({
+      user: { id: user._id, nom: user.nom, email: user.email },
+      token
+    })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ message: "Erreur serveur" })
+  }
 }
+
+
+
 
 const getAll = async (req, res) => {
     try {
@@ -160,37 +169,44 @@ const deleteOne = async (req, res) => {
         res.sendStatus(500)
     }
 }
- const renewPassword = async (req, res) => {
+const reNewPassword = async (req, res) => {
   try {
-    const { oldPassword, newPassword } = req.body;
-
-    if (!oldPassword || !newPassword) {
-      return res.status(400).json({ message: "Ancien et nouveau mot de passe requis" });
+     const { oldPassword, newPassword } = req.body
+    console.log(req.body)
+    const { error } = userValidation(req.body).userLawReNewPassword
+    if (error) {
+      return res.status(400).json({ message: error.details[0].message })
     }
 
-    // Récupérer l'utilisateur via le middleware auth (req.user.id)
-    const user = await User.findById(req.user.id);
+   
+
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ message: "Utilisateur non authentifié" })
+    }
+
+    const user = await User.findById(req.user.id)
     if (!user) {
-      return res.status(404).json({ message: "Utilisateur non trouvé" });
+      return res.status(404).json({ message: "Utilisateur non trouvé" })
     }
 
     // Vérifier l'ancien mot de passe
-    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    const isMatch = await bcrypt.compare(oldPassword, user.password)
     if (!isMatch) {
-      return res.status(401).json({ message: "Ancien mot de passe incorrect" });
+      return res.status(401).json({ message: "Ancien mot de passe incorrect" })
     }
 
-    // Hasher le nouveau mot de passe
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(newPassword, salt);
+    // Hasher et sauvegarder le nouveau mot de passe
+    const salt = await bcrypt.genSalt(10)
+    user.password = await bcrypt.hash(newPassword, salt)
 
-    await user.save();
+    await user.save()
 
-    res.json({ message: "Mot de passe mis à jour avec succès" });
+    res.json({ message: "✅ Mot de passe mis à jour avec succès" })
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Erreur serveur" });
+    console.error(err)
+    res.status(500).json({ message: "Erreur serveur" })
   }
-};
+}
 
-export { register, login, getAll, getOne, updateUser, deleteOne, renewPassword }
+
+export { register, login, getAll, getOne, updateUser, deleteOne, reNewPassword }

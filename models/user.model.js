@@ -1,51 +1,56 @@
-import mongoose from 'mongoose'
-import bcrypt from 'bcrypt'
+import mongoose from "mongoose";
+import bcrypt from "bcrypt";
 
 const userSchema = new mongoose.Schema(
-    {
-        nom : {
-            type : String,
-            default : false
-        },
-        prenom : {
-            type : String,
-            default : false
-          },
-        email : {
-            type : String,
-            required : true
-        },
-        password : {
-            type : String,
-            required : true
-        }
+  {
+    nom: {
+      type: String,
+      default : false, // ou default: "" si tu veux le rendre optionnel
     },
-    {
-        timestamps : true
-    }
-)
+    email: {
+      type: String,
+      required: true,
+      unique: true, // ⚡ bon pour éviter les doublons
+    },
+    password: {
+      type: String,
+      required: true,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
 
-userSchema.pre("save", async function() {
-    if ( this.isModified("password") ) {
-        this.password = await bcrypt.hash(this.password, 10)
-    }
-})
+// Hash avant save
+userSchema.pre("save", async function (next) {
+  if (this.isModified("password")) {
+    this.password = await bcrypt.hash(this.password, 10);
+  }
+  next();
+});
 
-userSchema.pre("findOneAndUpdate", async function () {
+// Hash avant update
+userSchema.pre("findOneAndUpdate", async function (next) {
   let update = this.getUpdate();
 
-  // Si l'utilisateur met à jour le password
-  if (update.password) {
-    const hashed = await bcrypt.hash(update.password, 10);
+  // Vérifie si le password est dans $set
+  if (update.password || (update.$set && update.$set.password)) {
+    const newPassword = update.password || update.$set.password;
+    const hashed = await bcrypt.hash(newPassword, 10);
 
-    // On met à jour avec le password hashé
-    this.setUpdate({
-      ...update,
-      password: hashed
-    });
+    if (update.password) {
+      update.password = hashed;
+    } else {
+      update.$set.password = hashed;
+    }
+
+    this.setUpdate(update);
   }
-})
 
-const User = mongoose.model('User', userSchema)
+  next();
+});
 
-export default User
+const User = mongoose.model("User", userSchema);
+
+export default User;

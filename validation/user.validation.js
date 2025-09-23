@@ -1,12 +1,7 @@
 import joi from 'joi'
-export const renewPasswordSchema = joi.object({
-  password: joi.string().required(),
-  newPassword: joi.string().min(6).required(),
-})
 function userValidation(body) {
     const userLawRegister = joi.object({
         nom : joi.string(),
-        prenom : joi.string(),
         email : joi.string().required(),
         // Regex : Minimum 8 caractères, une majuscule, une minuscule,, un chiffre et un caractère spécial
         password : joi.string().required()
@@ -20,17 +15,23 @@ function userValidation(body) {
     
     const userLawUpdate = joi.object({
         nom : joi.string(),
-        prenom : joi.string(),
-        email : joi.string(),
+        email : joi.string().required(),
         // Regex : Minimum 8 caractères, une majuscule, une minuscule,, un chiffre et un caractère spécial
-        password : joi.string()
+        password : joi.string().required()
+    })
+    const userLawReNewPassword = joi.object({
+        // password : joi.string().required(),
+        oldPassword: joi.string().required(),
+        newPassword: joi.string().required()
+        
     })
 
     
     return {
         userLawRegister : userLawRegister.validate(body),
         userLawLogin : userLawLogin.validate(body),
-        userLawUpdate : userLawUpdate.validate(body)
+        userLawUpdate : userLawUpdate.validate(body),
+        userLawReNewPassword : userLawReNewPassword.validate(body)
     }
 }
 

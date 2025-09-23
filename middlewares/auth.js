@@ -1,32 +1,22 @@
+import jwt from 'jsonwebtoken'
 
-import jwt from "jsonwebtoken"
+const authenticateToken = (req, res, next) => {
+    const authHeader = req.headers['authorization']
 
-export default function auth(req, res, next) {
-  try {
-    // Récupère l'entête Authorization
-    const authHeader = req.headers["authorization"]
-    if (!authHeader) {
-      return res.status(401).json({ message: "⚠️ Aucun token fourni" })
+    const token = authHeader && authHeader.split(' ')[1]
+
+    if ( !token ) {
+        return res.status(401).json({ msg : "Token manquant" })
     }
 
-    // Découpe "Bearer <token>"
-    const parts = authHeader.split(" ")
-    if (parts.length !== 2 || parts[0] !== "Bearer") {
-      return res.status(401).json({ message: "⚠️ Format de token invalide" })
-    }
+    jwt.verify(token, process.env.SECRET_KEY, (err, user) => {
 
-    const token = parts[1]
+        if (err) return res.status(403).json({ message: "Token invalide" });
 
-    // Vérifie le token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET)
-
-    // ✅ Si valide → on stocke les infos dans req.user
-    req.user = decoded
-
-    next()
-  } catch (err) {
-    console.error("Erreur auth:", err.message)
-    return res.status(401).json({ message: "⚠️ Token invalide ou expiré" })
-  }
+        req.user = user;
+        
+        next();
+    });
 }
 
+export default authenticateToken
