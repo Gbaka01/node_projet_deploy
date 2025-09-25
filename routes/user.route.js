@@ -6,7 +6,7 @@ const router = Router()
 
 router.post('/register', register)
 router.post('/login', login)
-router.get('/list', getAll)
+router.get('/list', auth, getAll)
 router.put("/renew-password", auth, reNewPassword);
 router.get('/:id', auth, getOne)
 router.put('/:id', auth, updateUser)
