@@ -20,13 +20,7 @@ const app = express();
 
 // Middlewares
 app.use(express.json());
-app.use(cors({
-  origin: ["https://reseaugbaka.fr"],
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
-}));
-
-app.options("*", cors()); // ✅ pour le preflight
+app.use(cors());
 
 
 
