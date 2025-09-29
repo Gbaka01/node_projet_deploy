@@ -20,11 +20,7 @@ const app = express();
 
 // Middlewares
 app.use(express.json());
-app.use(cors({
-  origin: "https://reseaugbaka.fr",  // remplace par ton domaine en https
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  credentials: true
-}))
+app.use(cors())
 
 
 
