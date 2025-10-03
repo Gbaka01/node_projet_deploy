@@ -16,7 +16,9 @@ const createImage = async (req, res) => {
 
     if (req.file) {
       // on enregistre l’URL complète du fichier uploadé
-      body.nom = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+   const protocol = req.headers['x-forwarded-proto'] || req.protocol; 
+body.nom = `${protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+
     }
 
     // ✅ correction de la validation
