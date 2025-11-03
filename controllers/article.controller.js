@@ -1,4 +1,5 @@
 import Article from "../models/article.model.js"
+import Report from "../models/report.model.js";
 import articleValidation from "../validations/article.validation.js"
 
 const createArticle  = async (req, res) => {
@@ -26,15 +27,48 @@ const createArticle  = async (req, res) => {
     }
 }
 
-const getAllArticles = async(req, res) => {
-    try {
-        const articles = await Article.find().populate("author", "nom")
-        return res.status(200).json(articles)
-    } catch (error) {
-        console.log(error)
-        res.status(500).json({message: "Server Error", error: error})
-    }
-}
+ const getAllArticles = async (req, res) => {
+  try {
+    // On récupère tous les articles
+    const articles = await Article.find()
+      .populate("author", "nom email") // Affiche le nom + email de l’auteur
+      .lean(); // Convertit en objets JS simples pour pouvoir ajouter des champs ensuite
+
+    // Pour chaque article, on récupère ses signalements
+    const articlesWithReports = await Promise.all(
+      articles.map(async (article) => {
+        const reports = await Report.find({ article: article._id })
+          .populate("reporter", "nom email") // Affiche le nom du signalant
+          .select("raisons description status"); // On choisit les champs utiles
+
+        return { ...article, reports }; // On fusionne article + ses signalements
+      })
+    );
+
+    return res.status(200).json(articlesWithReports);
+  } catch (error) {
+    console.error("Erreur serveur :", error);
+    res.status(500).json({ message: "Erreur serveur", error: error.message });
+  }
+};
+ const getAllArticlesModeration = async (req, res) => {
+  try {
+    // 1️⃣ On récupère tous les IDs d'articles signalés avec status = "approuvé"
+    const approvedReports = await Report.find({ status: "approuvé" }).distinct("article");
+
+    // 2️⃣ On récupère tous les articles sauf ceux-là
+    const articles = await Article.find({
+      _id: { $nin: approvedReports }, // $nin = "non inclus dans cette liste"
+    })
+      .populate("author", "nom prenom")
+      .sort({ createdAt: -1 }); // plus récents d’abord, optionnel
+
+    return res.status(200).json(articles);
+  } catch (error) {
+    console.error("Erreur serveur :", error);
+    return res.status(500).json({ message: "Erreur serveur", error: error.message });
+  }
+};
 
 const getArticleById = async(req,res) => {
     try {
@@ -84,4 +118,4 @@ const deleteArticle = async(req, res) => {
     }
 }
 
-export { createArticle, getAllArticles, getArticleById, updateArticle, deleteArticle }
+export { createArticle, getAllArticles, getAllArticlesModeration, getArticleById, updateArticle, deleteArticle }
