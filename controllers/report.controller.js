@@ -1,30 +1,48 @@
 // controllers/report.controller.js
 import Report from "../models/report.model.js";
+import Article from "../models/article.model.js";
 
 export const createReport = async (req, res) => {
   try {
-    const { articleId, raisons, description, status } = req.body;
+    const { article, raisons, description, status } = req.body;
 
-    if (!articleId || !raisons || !raisons.length) {
-      return res.status(400).json({ message: "Article ou raisons manquants" });
+    if (!article || !raisons || !raisons.length) {
+      return res
+        .status(400)
+        .json({ message: "Article ou raisons manquants" });
     }
 
-    // utilisateur connecté (modérateur ou user)
-     const reporterId = req.user?.id || null;
+    // 🔍 Chercher l’article et son auteur
+    const foundArticle = await Article.findById(article).populate(
+      "author",
+      "nom"
+    );
+    if (!foundArticle) {
+      return res.status(404).json({ message: "Article introuvable" });
+    }
+
+    const reporterId = req.user?.id || null;
 
     const report = new Report({
-      articleId,
+      article, // ObjectId de l’article
+      articleTitre: foundArticle.titre, // ✅ titre de l’article
+      articleAuteur: foundArticle.author
+        ? `${foundArticle.author.nom}`
+        : "Auteur inconnu", // ✅ nom complet
       reporter: reporterId,
       raisons,
       description,
-      status
+      status: status || "en_attente",
     });
 
     await report.save();
 
-    res.status(201).json({ message: "Signalement créé avec succès", report });
+    res.status(201).json({
+      message: "✅ Signalement créé avec succès",
+      report,
+    });
   } catch (err) {
-    console.error(err);
+    console.error("❌ Erreur createReport:", err);
     res.status(500).json({ message: "Erreur serveur" });
   }
 };
@@ -32,7 +50,7 @@ export const createReport = async (req, res) => {
 export const getReports = async (req, res) => {
   try {
     const reports = await Report.find()
-      .populate("articleId", "titre")
+      .populate("article", "titre")
       .sort({ createdAt: -1 });
 
     res.status(200).json(reports);

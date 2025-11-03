@@ -1,10 +1,18 @@
 import mongoose from "mongoose";
 
 const reportSchema = new mongoose.Schema({
-  articleId: {
+  article: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Article",
     required: true,
+  },
+  articleTitre: {
+    type: String,
+    required: false,
+  },
+  articleAuteur: {
+    type: String,
+    required: false,
   },
   reporter: {
     type: mongoose.Schema.Types.ObjectId,
