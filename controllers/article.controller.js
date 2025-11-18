@@ -51,6 +51,31 @@ const createArticle  = async (req, res) => {
     res.status(500).json({ message: "Erreur serveur", error: error.message });
   }
 };
+const getMyArticles = async (req, res) => {
+  try {
+    const authorId = req.user.id; // 🔥 ID issu du token JWT
+
+    const articles = await Article.find({ author: authorId })
+      .populate("author", "nom email")
+      .lean();
+
+    const articlesWithReports = await Promise.all(
+      articles.map(async (article) => {
+        const reports = await Report.find({ article: article._id })
+          .populate("reporter", "nom email")
+          .select("raisons description status");
+
+        return { ...article, reports };
+      })
+    );
+
+    return res.status(200).json(articlesWithReports);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Erreur serveur", error: error.message });
+  }
+};
+
  const getAllArticlesModeration = async (req, res) => {
   try {
     // 1️⃣ On récupère tous les IDs d'articles signalés avec status = "approuvé"
@@ -118,4 +143,4 @@ const deleteArticle = async(req, res) => {
     }
 }
 
-export { createArticle, getAllArticles, getAllArticlesModeration, getArticleById, updateArticle, deleteArticle }
+export { createArticle, getAllArticles, getMyArticles, getAllArticlesModeration, getArticleById, updateArticle, deleteArticle }
