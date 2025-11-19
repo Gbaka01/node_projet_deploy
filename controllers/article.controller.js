@@ -108,39 +108,77 @@ const getArticleById = async(req,res) => {
     }
 }
 
-const updateArticle = async(req,res) => {
-    try {
-        const {body} = req
-        if(!body){
-            return res.status(400).json({message: "No data in the request"})
-        }
+const updateArticle = async (req, res) => {
+  try {
+    const { body } = req;
 
-        const {error} = articleValidation(body).articleUpdate
-        if(error){
-            return res.status(401).json(error.details[0].message)
-        }
-        const updatedArticle = await Article.findByIdAndUpdate(req.params.id, body, {new: true})
-        if(!updatedArticle){
-            res.status(404).json({message: "article doesn't exist"})
-        }
-        return res.status(200).json(updatedArticle)
-    } catch (error) {
-        console.log(error)
-        res.status(500).json({message: "Server error", error: error})
+    if (!body) {
+      return res.status(400).json({ message: "No data in the request" });
     }
-}
 
-const deleteArticle = async(req, res) => {
-    try {
-        const article = await Article.findByIdAndDelete(req.params.id)
-        if(!article){
-            return res.status(404).json({message: "article doesn't exist"})
-        }
-        return res.status(200).json({message: "article has been deleted"})
-    } catch (error) {
-        console.log(error)
-        res.status(500).json({message: "Server error", error: error})
+    // 👉 Vérification Validations Joi
+    const { error } = articleValidation(body).articleUpdate;
+    if (error) {
+      return res.status(401).json(error.details[0].message);
     }
-}
+
+    // 👉 On récupère l’article
+    const article = await Article.findById(req.params.id);
+    if (!article) {
+      return res.status(404).json({ message: "article doesn't exist" });
+    }
+
+    // ❌ Vérification de l’auteur
+    if (article.author.toString() !== req.user.id) {
+      return res.status(403).json({
+        message: "Vous n’êtes pas autorisé à modifier cet article",
+      });
+    }
+
+    // 👉 Mise à jour
+    const updatedArticle = await Article.findByIdAndUpdate(
+      req.params.id,
+      body,
+      { new: true }
+    );
+
+    return res.status(200).json(updatedArticle);
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+
+const deleteArticle = async (req, res) => {
+  try {
+    // 👉 On récupère l’article
+    const article = await Article.findById(req.params.id);
+
+    if (!article) {
+      return res.status(404).json({ message: "article doesn't exist" });
+    }
+
+    // ❌ Vérification de l’auteur
+    if (article.author.toString() !== req.user.id) {
+      return res.status(403).json({
+        message: "Vous n’êtes pas autorisé à supprimer cet article",
+      });
+    }
+
+    // 👉 Suppression
+    await Article.findByIdAndDelete(req.params.id);
+
+    return res.status(200).json({
+      message: "article has been deleted"
+    });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
 
 export { createArticle, getAllArticles, getMyArticles, getAllArticlesModeration, getArticleById, updateArticle, deleteArticle }
