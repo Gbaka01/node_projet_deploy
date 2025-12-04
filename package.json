@@ -20,6 +20,7 @@
     "npm": "^11.5.2"
   },
   "dependencies": {
+    "@influxdata/influxdb3-client": "^1.4.0",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "joi": "^18.0.1",
@@ -29,4 +30,5 @@
     "mrmongoo-cli": "^1.1.0",
     "multer": "^2.0.2"
   }
+  
 }

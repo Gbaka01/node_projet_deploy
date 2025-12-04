@@ -9,6 +9,19 @@ import articleRoute from "./routes/article.route.js";
 import imageRoutes from "./routes/image.route.js";
 import reportRoutes from "./routes/report.route.js";
 import db from "./db/db.js"
+import {InfluxDBClient, Point} from '@influxdata/influxdb3-client'
+
+const token = process.env.INFLUXDB_TOKEN
+
+async function main() {
+    const client = new InfluxDBClient({host: 'https://us-east-1-1.aws.cloud2.influxdata.com', token: token})
+
+    // following code goes here
+
+    client.close()
+}
+
+main()
 // Charger .env
 dotenv.config();
 
