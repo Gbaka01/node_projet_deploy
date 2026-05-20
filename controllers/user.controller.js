@@ -1,4 +1,7 @@
 import User from '../models/user.model.js'
+import Image from "../models/image.model.js"
+import Report from "../models/report.model.js";
+import Article from "../models/article.model.js"
 import userValidation from '../validation/user.validation.js'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
@@ -199,6 +202,41 @@ const reNewPassword = async (req, res) => {
     res.status(500).json({ message: "Erreur serveur" })
   }
 }
+const deleteAccount = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // 1. Supprimer les données liées
+    
+    await Image.deleteMany({ user: userId });
+    await Article.deleteMany({ user: userId });
+    await Report.deleteMany({ user: userId });
+    // 2. Supprimer l'utilisateur
+    const deletedUser = await User.findByIdAndDelete(userId);
+
+    if (!deletedUser) {
+      return res.status(404).json({
+        success: false,
+        message: "Utilisateur introuvable",
+      });
+    }
+
+    // 3. Réponse
+    return res.status(200).json({
+      success: true,
+      message: "Compte et toutes les données associées supprimés avec succès",
+    });
+  } catch (error) {
+    console.error("Erreur suppression compte :", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de la suppression du compte",
+      error: error.message,
+    });
+  }
+};
 
 
-export { register, login, getAll, getOne, updateUser, deleteOne, reNewPassword }
+
+export { register, login, getAll, getOne, updateUser, deleteOne, reNewPassword, deleteAccount }

@@ -1,6 +1,8 @@
 import { Router } from 'express'
-import { register, login, getAll, getOne, updateUser, deleteOne, reNewPassword } from '../controllers/user.controller.js'
+import { register, login, getAll, getOne, updateUser, deleteOne, reNewPassword, deleteAccount } from '../controllers/user.controller.js'
 import auth from '../middlewares/auth.js'
+
+import User from '../models/user.model.js'
 
 const router = Router()
 
@@ -11,5 +13,6 @@ router.put("/renew-password", auth, reNewPassword);
 router.get('/:id', auth, getOne)
 router.put('/:id', auth, updateUser)
 router.delete('/:id', auth, deleteOne)
+router.delete("/delete-account", auth, deleteAccount ) 
 
 export default router
